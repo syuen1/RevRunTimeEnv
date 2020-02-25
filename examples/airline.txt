@@ -1,0 +1,26 @@
+var seats;
+var agent1;
+var agent2;
+seats=3;
+agent1=1;
+agent2=1;
+par{
+    while (agent1==1) do
+        if (seats>0) then
+            seats=seats-1;
+        else
+            agent1=0;
+        fi;
+    od;
+}{
+    while (agent2==1) do
+        if (seats>0) then
+            seats=seats-1;
+        else
+            agent2=0;
+        fi;
+    od;
+}
+remove agent2;
+remove agent1;
+remove seats;
