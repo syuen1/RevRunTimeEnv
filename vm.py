@@ -27,18 +27,18 @@ def pop1(stack,top):
     return (t,top-1)
 
 #命令，被演算子の組を一つ受け取り実行する
-def executedcommand(stack,rstack,lstack,com,opr,pc,pre,top,rtop,ltop,address,value,parpath):
+def executedcommand(stack,rstack,lstack,com,opr,pc,pre,top,rtop,ltop,address,value,parpath,tablecount):
     if com==1:#push
         top=push(opr,stack,top)
         pre=pc
-        return (pc+1,pre,stack,top,rtop)
+        return (pc+1,pre,stack,top,rtop,tablecount)
     elif com==2:#load
         value.acquire()
         c=value[opr]
         value.release()
         top=push(c,stack,top)
         pre=pc
-        return (pc+1,pre,stack,top,rtop)
+        return (pc+1,pre,stack,top,rtop,tablecount)
     elif com==3:#store
         value.acquire()
         rstack[rtop.value]=(value[opr])
@@ -48,17 +48,17 @@ def executedcommand(stack,rstack,lstack,com,opr,pc,pre,top,rtop,ltop,address,val
         value[opr]=stack[opr]
         value.release()
         pre=pc
-        return (pc+1,pre,stack,top,rtop)
+        return (pc+1,pre,stack,top,rtop,tablecount)
     elif com==4:#jpc
         (c,top)=pop1(stack,top)
         if c==1:
             pre=pc
             pc=opr-2
-        return (pc+1,pre,stack,top,rtop)
+        return (pc+1,pre,stack,top,rtop,tablecount)
     elif com==5:#jmp
         pre=pc
         pc=opr-2
-        return (pc+1,pre,stack,top,rtop)
+        return (pc+1,pre,stack,top,rtop,tablecount)
     elif com==6:#op
         if (opr)==0:#'+'
             (c,top)=pop1(stack,top)
@@ -87,33 +87,43 @@ def executedcommand(stack,rstack,lstack,com,opr,pc,pre,top,rtop,ltop,address,val
             else:
                 top=push(0,stack,top)
         pre=pc
-        return (pc+1,pre,stack,top,rtop)
+        return (pc+1,pre,stack,top,rtop,tablecount)
     elif com==7:#label
         if args[2]=='f':
             lstack[ltop.value]=(pre)
             lstack[ltop.value+1]=parpath
             ltop.value = ltop.value+2
         pre=pc
-        return (pc+1,pre,stack,top,rtop)
+        return (pc+1,pre,stack,top,rtop,tablecount)
     elif com==8:#rjmp
         pre=pc
         ltop.value=ltop.value-1
         pc=int(lstack[ltop.value])
         pc=pc-2
         ltop.value=ltop.value-1
-        return (pc+1,pre,stack,top,rtop)
+        return (pc+1,pre,stack,top,rtop,tablecount)
     elif com==9:#restore
         rtop.value=rtop.value-1
         value[opr]=int(rstack[rtop.value])
         rtop.value=rtop.value-1
         pre=pc
-        return (pc+1,pre,stack,top,rtop)
+        return (pc+1,pre,stack,top,rtop,tablecount)
     elif com==0:#nop
         pre=pc
-        return (pc+1,pre,stack,top,rtop)
+        return (pc+1,pre,stack,top,rtop,tablecount)
     elif com==10:#par
         pre=pc
-        return (pc+1,pre,stack,top,rtop)
+        return (pc+1,pre,stack,top,rtop,tablecount)
+    elif com==11:#alloc
+        top=push(opr,stack,top)
+        tablecount.value=tablecount.value+1
+        pre=pc
+        return (pc+1,pre,stack,top,rtop,tablecount)
+    elif com==12:#free
+        (a,top)=pop1(stack,top)
+        tablecount.value=tablecount.value-1
+        pre=pc
+        return (pc+1,pre,stack,top,rtop,tablecount)
 
 #コードの実行
 def execution(mode,lock,mlock,command,opr,start,end,stack,address,value,tablecount,rstack,lstack,rtop,ltop,endflag,parpath):
@@ -142,13 +152,17 @@ def execution(mode,lock,mlock,command,opr,start,end,stack,address,value,tablecou
                     command1='label'
                 elif command[pc]==10:
                     command1='  par'
+                elif command[pc]==11:
+                    command1='alloc'
+                elif command[pc]==12:
+                    command1=' free'
                 print("~~~~~~~~Process"+str(parpath)+" execute~~~~~~~~")
                 print("pc = "+str(pc+1)+"   command = "+command1+"   operand = "+str(opr[pc])+"")
             #コマンドを実行する関数に処理を渡す
-            (pc,pre,stack,top,rtop)=executedcommand(stack,rstack,lstack,command[pc],opr[pc],pc,pre,top,rtop,ltop,address,value,parpath)
+            (pc,pre,stack,top,rtop,tablecount)=executedcommand(stack,rstack,lstack,command[pc],opr[pc],pc,pre,top,rtop,ltop,address,value,parpath,tablecount)
             if args[3]!='q':
                 print("executing stack:       "+str(stack[:])+"")
-                print("shared variable stack: "+str(value[0:tablecount])+"")
+                print("shared variable stack: "+str(value[0:tablecount.value])+"")
             #表示モードによってプロセスの鍵の管理の仕方が違う
             if parpath!=0:
                 if mode=='2':
@@ -173,11 +187,15 @@ def execution(mode,lock,mlock,command,opr,start,end,stack,address,value,tablecou
                     command1='restore'
                 elif command[pc]==10:
                     command1='    par'
+                elif command[pc]==11:
+                    command1='  alloc'
+                elif command[pc]==12:
+                    command1='   free'
                 print("~~~~~~~~Process"+str(parpath)+" execute~~~~~~~~")
                 print("pc = "+str(pc+1)+"   command = "+command1+"   operand = "+str(opr[pc])+"")
-            (pc,pre,stack,top,rtop)=executedcommand(stack,rstack,lstack,command[pc],opr[pc],pc,pre,top,rtop,ltop,address,value,parpath)
+            (pc,pre,stack,top,rtop,tablecount)=executedcommand(stack,rstack,lstack,command[pc],opr[pc],pc,pre,top,rtop,ltop,address,value,parpath,tablecount)
             if args[3]!='q':
-                print("shared variable stack: "+str(value[0:tablecount])+"")
+                print("shared variable stack: "+str(value[0:tablecount.value])+"")
             if parpath!=0:
                 lock.acquire(False)
                 mlock.release()
@@ -235,8 +253,8 @@ def backward():
 
 #スタックとinvertedcodeの出力
 def forward(ltop,rtop):
-    if args[2]=='f':
-        path2='inv_code.txt'
+    if args[2]!='f' and args[2]!='b':
+        path2=args[2]
         f2=open(path2,mode='w')
         for i in range(0,count_pc,1):
             if com[count_pc-i-1]==7:
@@ -249,9 +267,15 @@ def forward(ltop,rtop):
                 f2.write(" 7     0\n")
             elif com[count_pc-i-1]==10:
                 f2.write("10 "+str(opr[count_pc-i-1]).rjust(5)+"\n")
+            elif com[count_pc-i-1]==11:
+                f2.write("12 "+str(opr[count_pc-i-1]).rjust(5)+"\n")
+            elif com[count_pc-i-1]==12:
+                f2.write("11 "+str(opr[count_pc-i-1]).rjust(5)+"\n")
             else:
                 f2.write(" 0     0\n")
         f2.close()
+        #print("forward code is converted into inverting code.")
+    elif args[2]=='f':
         path='lstack.txt'
         f=open(path,'w')
         for i in range(0,ltop,2):
@@ -275,7 +299,7 @@ if __name__ == '__main__':
     start=[]
     end=[]
     tabledata=[]
-    tablecount=0
+    tablecount= Value('i',0)
     address = Array('i',10)
     value = Array('i',10)
     rstack = Array('i',100000)
@@ -295,18 +319,23 @@ if __name__ == '__main__':
     f.close()
     k=0
     #変数名と変数の値との関係を保存するための機能現在の処理には必要ない将来用
-    for i in range(0,len(tabledata),20):
-        t=tabledata[i+11:i+13]
-        s=re.search(r'\d+',t)
-        address[k]=((int)(s.group()))
-        t2=tabledata[i+13:i+19]
-        s2=re.search(r'\d+',t2)
-        value[k]=((int)(s2.group()))
-        k=k+1
-        tablecount=tablecount+1
+    #for i in range(0,len(tabledata),20):
+    #    t=tabledata[i+11:i+13]
+    #    s=re.search(r'\d+',t)
+    #    address[k]=((int)(s.group()))
+    #    t2=tabledata[i+13:i+19]
+    #    s2=re.search(r'\d+',t2)
+    #    value[k]=((int)(s2.group()))
+    #    k=k+1
+    #    tablecount=tablecount+1
 
     backward()
 
+    if len(sys.argv)<4:
+        #print("convert into inv_code.txt")
+        coderead(start,end)
+        forward(ltop.value,rtop.value)
+        sys.exit()
     #forward mode
     if args[2]=='f':
         (start,end)=coderead(start,end)
@@ -346,6 +375,9 @@ if __name__ == '__main__':
                             lock[i].release()
             for i in range(0,parflag,1):
                 process[i].join()
+            for i in range(0,tablecount.value,1):
+                stack[i]=value[i]
+            execution(mode,lockfree,lockfree,com,opr,end[parflag-1]+1,len(com),stack,address,value,tablecount,rstack,lstack,rtop,ltop,endflag0,0)
         elif parflag==0:
             mode='1'
             execution(mode,lockfree,mlock,com,opr,0,len(com),stack,address,value,tablecount,rstack,lstack,rtop,ltop,endflag0,0)
@@ -362,8 +394,8 @@ if __name__ == '__main__':
         for i in range(0,len(rdata),1):
             rstack[i]=int(rdata[i])
             rtop.value=rtop.value+1
-        for i in range(0,len(stack),1):
-            value[i]=int(stack[i])
+        #for i in range(0,len(stack),1):
+            #value[i]=int(stack[i])
         ltop.value=ltop.value-1
         rtop.value=rtop.value-1
         mode='0'
@@ -376,6 +408,7 @@ if __name__ == '__main__':
             for i in range(0,parflag,1):
                 lock[i].acquire()
             process={}
+            execution(mode,lockfree,lockfree,com,opr,0,end[0],stack,address,value,tablecount,rstack,lstack,rtop,ltop,endflag0,0)
             #並列プロセスの生成
             for i in range(0,parflag,1):
                 process[i]=Process(target=execution,args=(mode,lock[parflag-i-1],mlock,com,opr,end[i],start[i],stack,address,value,tablecount,rstack,lstack,rtop,ltop,endflag[i],parflag-i))
@@ -409,7 +442,9 @@ if __name__ == '__main__':
             execution(mode,lockfree,lockfree,com,opr,start[parflag-1]+1,count_pc,stack,address,value,tablecount,rstack,lstack,rtop,ltop,endflag0,0)
         elif parflag==0:
             execution(mode,lockfree,lockfree,com,opr,0,len(com),stack,address,value,tablecount,rstack,lstack,rtop,ltop,endflag0,0)
-
+    elif args[2]=='c':
+        (start,end)=coderead(start,end)
+        forward(ltop.value,rtop.value)
     #経過時間の表示
     elapsed_time = time.time()-start_time
     print("elapsed_time:{0}".format(elapsed_time) + "[sec]")
