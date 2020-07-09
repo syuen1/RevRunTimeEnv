@@ -24,6 +24,6 @@ label stack : lstack.txt  value stack : rstack.txt  final variable values: varia
 1. Invert the code<br>
 > py ./vm_CUI.py code.txt invcode.txt<br>
 1. Run the code backward<br>
-> py ./vmCUI.py invcode.txt<br>
+> py ./vmCUI.py invcode.txt b v<br>
 > mode 1:auto 2:select >> <br>
 
