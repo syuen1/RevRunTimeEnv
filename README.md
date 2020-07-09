@@ -15,14 +15,14 @@ StackMachineSpec.pdf: Specification of the reversible stack machine<br>
 
 ### Run the compiled code
 1. Run the code forward (code.txt is the compiled SM code)<br>
-> py ./vmCUI.py code.txt f v<br>
-> mode 1:auto 2:select >> 1<br>
+> `py ./vmCUI.py code.txt f v`<br>
+> mode 1:auto 2:select >> `1`<br>
 > (vm runs without stopping)<br>
-> mode 1:auto 2:select >> 2<br>
+> mode 1:auto 2:select >> `2`<br>
 > (vm runs step by step)<br>
 label stack : lstack.txt  value stack : rstack.txt  final variable values: variable_region.txt<br>
 2. Invert the code<br>
-> py ./vm_CUI.py code.txt invcode.txt<br>
+> `py ./vm_CUI.py code.txt invcode.txt`<br>
 3. Run the code backward<br>
-> py ./vmCUI.py invcode.txt b v<br>
+> `py ./vmCUI.py invcode.txt b v`<br>
 > mode 1:auto 2:select >> <br>
