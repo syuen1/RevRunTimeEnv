@@ -21,8 +21,8 @@ StackMachineSpec.pdf: Specification of the reversible stack machine<br>
 > mode 1:auto 2:select >> 2<br>
 > (vm runs step by step)<br>
 label stack : lstack.txt  value stack : rstack.txt  final variable values: variable_region.txt<br>
-1. Invert the code<br>
+2. Invert the code<br>
 > py ./vm_CUI.py code.txt invcode.txt<br>
-1. Run the code backward<br>
+3. Run the code backward<br>
 > py ./vmCUI.py invcode.txt b v<br>
 > mode 1:auto 2:select >> <br>
